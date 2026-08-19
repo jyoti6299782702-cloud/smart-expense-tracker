@@ -21,7 +21,7 @@ def init_db():
             )
         ''')
         conn.commit()
-
+init_db()
 # 2. Main Page Render
 @app.route('/')
 def home():
