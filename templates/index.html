@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Expense Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <!-- Chart.js CDN for interactive graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    
+   <header class="app-header">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <h1>🌸 Smart Expense Tracker</h1>
+      <p>Keep your finances clean, aesthetic & smart</p>
+    </div>
+    
+    <!-- Theme Switcher Dropdown -->
+    <div style="width: 140px;">
+      <select id="theme-selector" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; cursor: pointer;">
+        <option value="pink">🌸 Soft Pink</option>
+        <option value="purple">💜 Lavender</option>
+        <option value="dark">🌙 Dark Rose</option>
+      </select>
+    </div>
+  </div>
+</header>
+    <!-- Top Summary Cards -->
+    <div class="summary-grid">
+      <div class="card balance-card">
+        <span class="card-label">Total Balance</span>
+        <h2 id="total-balance">₹0.00</h2>
+      </div>
+      <div class="card income-card">
+        <span class="card-label">Total Income</span>
+        <h2 id="total-income">₹0.00</h2>
+      </div>
+      <div class="card expense-card">
+        <span class="card-label">Total Expense</span>
+        <h2 id="total-expense">₹0.00</h2>
+      </div>
+    </div>
+
+    <!-- Main Workspace (Form + Chart) -->
+    <div class="workspace-grid">
+      <!-- Left: Add Form -->
+      <div class="card form-card">
+        <h3>Add New Entry</h3>
+        <form id="expense-form">
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" id="title" placeholder="e.g., Cold Coffee, Rent" required>
+          </div>
+
+          <div class="form-group">
+            <label>Amount (₹)</label>
+            <input type="number" id="amount" step="0.01" placeholder="e.g., 250" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Type</label>
+              <select id="type">
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Category</label>
+              <select id="category">
+                <option value="Food">Food & Drinks</option>
+                <option value="Shopping">Shopping</option>
+                <option value="Bills">Bills & Utilities</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Travel">Travel</option>
+                <option value="Salary">Salary</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit">Add Transaction</button>
+        </form>
+      </div>
+
+      <!-- Right: Chart -->
+      <div class="card chart-card">
+        <h3>Expense Distribution</h3>
+        <div class="canvas-wrapper">
+          <canvas id="expenseChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom: History -->
+    <div class="card history-card">
+      <h3>Transaction History</h3>
+      <ul id="history-list" class="history-list"></ul>
+    </div>
+
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
