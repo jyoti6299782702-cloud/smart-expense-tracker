@@ -1,108 +1,105 @@
-document.addEventListener('DOMContentLoaded', () => {
-    let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
-    let chartInstance = null;
+// Function to get transactions from LocalStorage
+function getTransactions() {
+    return JSON.parse(localStorage.getItem('expense_tracker_data')) || [];
+}
 
-    const titleInput = document.getElementById('title');
-    const amountInput = document.getElementById('amount');
-    const categoryInput = document.getElementById('category');
-    const typeInput = document.getElementById('type');
-    const form = document.getElementById('expense-form');
+// Function to save transactions
+function saveTransactions(data) {
+    localStorage.setItem('expense_tracker_data', JSON.stringify(data));
+}
+
+function updateUI() {
+    const transactions = getTransactions();
     const list = document.getElementById('transaction-list');
     const totalIncomeEl = document.getElementById('total-income');
     const totalExpenseEl = document.getElementById('total-expense');
     const netBalanceEl = document.getElementById('net-balance');
-    const chartCanvas = document.getElementById('expenseChart');
 
-    function updateSummary() {
-        let income = 0;
-        let expense = 0;
+    let income = 0;
+    let expense = 0;
 
-        transactions.forEach(t => {
-            if (t.type === 'income') {
-                income += parseFloat(t.amount || 0);
-            } else {
-                expense += parseFloat(t.amount || 0);
-            }
-        });
+    if (list) list.innerHTML = '';
 
-        if (totalIncomeEl) totalIncomeEl.innerText = `₹${income.toFixed(2)}`;
-        if (totalExpenseEl) totalExpenseEl.innerText = `₹${expense.toFixed(2)}`;
-        if (netBalanceEl) netBalanceEl.innerText = `₹${(income - expense).toFixed(2)}`;
+    transactions.slice().reverse().forEach((t, index) => {
+        const actualIndex = transactions.length - 1 - index;
+        const amt = parseFloat(t.amount) || 0;
 
-        if (chartCanvas && typeof Chart !== 'undefined') {
-            renderChart(income, expense);
+        if (t.type === 'income') {
+            income += amt;
+        } else {
+            expense += amt;
         }
-    }
 
-    function renderList() {
-        if (!list) return;
-        list.innerHTML = '';
-        transactions.slice().reverse().forEach((t, index) => {
-            const actualIndex = transactions.length - 1 - index;
+        if (list) {
             const li = document.createElement('li');
             li.className = `transaction-item ${t.type}`;
             li.innerHTML = `
                 <div>
-                    <strong>${t.title}</strong>
+                    <strong>${t.title}</strong><br>
                     <small>${t.category} • ${t.date}</small>
                 </div>
-                <div>
-                    <span class="amount">${t.type === 'income' ? '+' : '-'}₹${parseFloat(t.amount).toFixed(2)}</span>
-                    <button class="delete-btn" onclick="deleteTransaction(${actualIndex})">🗑️</button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="amount" style="font-weight: bold; color: ${t.type === 'income' ? '#2e7d32' : '#d32f2f'};">
+                        ${t.type === 'income' ? '+' : '-'}₹${amt.toFixed(2)}
+                    </span>
+                    <button style="background: none; border: none; cursor: pointer; font-size: 16px;" onclick="deleteItem(${actualIndex})">🗑️</button>
                 </div>
             `;
             list.appendChild(li);
-        });
+        }
+    });
+
+    if (totalIncomeEl) totalIncomeEl.innerText = `₹${income.toFixed(2)}`;
+    if (totalExpenseEl) totalExpenseEl.innerText = `₹${expense.toFixed(2)}`;
+    if (netBalanceEl) netBalanceEl.innerText = `₹${(income - expense).toFixed(2)}`;
+}
+
+// Add transaction function
+function addTransaction(e) {
+    if (e) e.preventDefault();
+
+    const title = document.getElementById('title')?.value.trim();
+    const amount = parseFloat(document.getElementById('amount')?.value);
+    const category = document.getElementById('category')?.value || 'General';
+    const type = document.getElementById('type')?.value || 'expense';
+
+    if (!title || isNaN(amount) || amount <= 0) {
+        alert('Please enter a valid title and amount!');
+        return;
     }
 
-    function renderChart(income, expense) {
-        const ctx = chartCanvas.getContext('2d');
-        if (chartInstance) chartInstance.destroy();
-
-        chartInstance = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Income', 'Expense'],
-                datasets: [{
-                    data: [income || 1, expense || 0],
-                    backgroundColor: ['#4caf50', '#ff4d6d'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
-        });
-    }
-
-    if (form) {
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const newTx = {
-                title: titleInput.value.trim(),
-                amount: parseFloat(amountInput.value),
-                category: categoryInput ? categoryInput.value : 'General',
-                type: typeInput ? typeInput.value : 'expense',
-                date: new Date().toLocaleDateString('en-IN')
-            };
-
-            transactions.push(newTx);
-            localStorage.setItem('transactions', JSON.stringify(transactions));
-            
-            form.reset();
-            renderList();
-            updateSummary();
-        });
-    }
-
-    window.deleteTransaction = function(index) {
-        transactions.splice(index, 1);
-        localStorage.setItem('transactions', JSON.stringify(transactions));
-        renderList();
-        updateSummary();
+    const newTx = {
+        title: title,
+        amount: amount,
+        category: category,
+        type: type,
+        date: new Date().toLocaleDateString('en-IN')
     };
 
-    renderList();
-    updateSummary();
+    const transactions = getTransactions();
+    transactions.push(newTx);
+    saveTransactions(transactions);
+
+    // Reset Form
+    const form = document.getElementById('expense-form');
+    if (form) form.reset();
+
+    updateUI();
+}
+
+// Delete transaction
+window.deleteItem = function(index) {
+    const transactions = getTransactions();
+    transactions.splice(index, 1);
+    saveTransactions(transactions);
+    updateUI();
+};
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('expense-form');
+    if (form) {
+        form.addEventListener('submit', addTransaction);
+    }
+    updateUI();
 });
