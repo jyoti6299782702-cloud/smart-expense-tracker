@@ -1,158 +1,101 @@
+let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
 let chartInstance = null;
 
-// Page load hote hi data fetch karo
-document.addEventListener('DOMContentLoaded', () => {
-  loadData();
-  document.getElementById('expense-form').addEventListener('submit', handleAddTransaction);
+const titleInput = document.getElementById('title');
+const amountInput = document.getElementById('amount');
+const categoryInput = document.getElementById('category');
+const typeInput = document.getElementById('type');
+const form = document.getElementById('expense-form');
+const list = document.getElementById('transaction-list');
+const totalIncomeEl = document.getElementById('total-income');
+const totalExpenseEl = document.getElementById('total-expense');
+const netBalanceEl = document.getElementById('net-balance');
+
+function updateSummary() {
+    let income = 0;
+    let expense = 0;
+
+    transactions.forEach(t => {
+        if (t.type === 'income') {
+            income += parseFloat(t.amount);
+        } else {
+            expense += parseFloat(t.amount);
+        }
+    });
+
+    totalIncomeEl.innerText = `₹${income.toFixed(2)}`;
+    totalExpenseEl.innerText = `₹${expense.toFixed(2)}`;
+    netBalanceEl.innerText = `₹${(income - expense).toFixed(2)}`;
+
+    renderChart(income, expense);
+}
+
+function renderList() {
+    list.innerHTML = '';
+    transactions.slice().reverse().forEach((t, index) => {
+        const actualIndex = transactions.length - 1 - index;
+        const li = document.createElement('li');
+        li.className = `transaction-item ${t.type}`;
+        li.innerHTML = `
+            <div>
+                <strong>${t.title}</strong>
+                <small>${t.category} • ${t.date}</small>
+            </div>
+            <div>
+                <span class="amount">${t.type === 'income' ? '+' : '-'}₹${parseFloat(t.amount).toFixed(2)}</span>
+                <button class="delete-btn" onclick="deleteTransaction(${actualIndex})">🗑️</button>
+            </div>
+        `;
+        list.appendChild(li);
+    });
+}
+
+function renderChart(income, expense) {
+    const ctx = document.getElementById('expenseChart').getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+
+    chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Income', 'Expense'],
+            datasets: [{
+                data: [income, expense],
+                backgroundColor: ['#4caf50', '#ff4d6d'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const newTx = {
+        title: titleInput.value.trim(),
+        amount: parseFloat(amountInput.value),
+        category: categoryInput.value,
+        type: typeInput.value,
+        date: new Date().toLocaleDateString('en-IN')
+    };
+
+    transactions.push(newTx);
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+    
+    form.reset();
+    renderList();
+    updateSummary();
 });
 
-// 1. Backend se data mangwana
-async function loadData() {
-  const response = await fetch('/api/expenses');
-  const transactions = await response.json();
-  
-  updateSummary(transactions);
-  renderHistory(transactions);
-  renderChart(transactions);
-}
+window.deleteTransaction = function(index) {
+    transactions.splice(index, 1);
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+    renderList();
+    updateSummary();
+};
 
-// 2. Form submit hone par backend ko bhejna
-async function handleAddTransaction(e) {
-  e.preventDefault();
-
-  const payload = {
-    title: document.getElementById('title').value,
-    amount: parseFloat(document.getElementById('amount').value),
-    type: document.getElementById('type').value,
-    category: document.getElementById('category').value
-  };
-
-  await fetch('/api/expenses', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-
-  document.getElementById('expense-form').reset();
-  loadData();
-}
-
-// 3. Transaction delete function
-async function deleteEntry(id) {
-  await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
-  loadData();
-}
-
-// 4. Cards me balance update karna
-function updateSummary(transactions) {
-  let income = 0;
-  let expense = 0;
-
-  transactions.forEach(t => {
-    if (t.type === 'income') income += t.amount;
-    else expense += t.amount;
-  });
-
-  const balance = income - expense;
-
-  document.getElementById('total-balance').textContent = `₹${balance.toFixed(2)}`;
-  document.getElementById('total-income').textContent = `₹${income.toFixed(2)}`;
-  document.getElementById('total-expense').textContent = `₹${expense.toFixed(2)}`;
-}
-
-// 5. Recent list populate karna
-function renderHistory(transactions) {
-  const list = document.getElementById('history-list');
-  list.innerHTML = '';
-
-  if (transactions.length === 0) {
-    list.innerHTML = '<li style="text-align:center; color:#9ca3af; padding: 1rem;">No transactions yet 🌸</li>';
-    return;
-  }
-
-  transactions.forEach(t => {
-    const li = document.createElement('li');
-    li.className = 'history-item';
-    li.innerHTML = `
-      <div class="item-info">
-        <strong>${t.title}</strong>
-        <span>${t.category} • ${t.date.split(' ')[0]}</span>
-      </div>
-      <div>
-        <span class="item-amount ${t.type}">
-          ${t.type === 'income' ? '+' : '-'}₹${t.amount.toFixed(2)}
-        </span>
-        <button class="delete-btn" onclick="deleteEntry(${t.id})">✕</button>
-      </div>
-    `;
-    list.appendChild(li);
-  });
-}
-
-// 6. Theme ke hisab se Chart Render karna (POINT 2)
-function renderChart(transactions) {
-  const expenses = transactions.filter(t => t.type === 'expense');
-  
-  const categoryTotals = {};
-  expenses.forEach(t => {
-    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
-  });
-
-  const labels = Object.keys(categoryTotals);
-  const data = Object.values(categoryTotals);
-
-  const ctx = document.getElementById('expenseChart').getContext('2d');
-
-  if (chartInstance) {
-    chartInstance.destroy();
-  }
-
-  const themePalettes = {
-    pink: ['#f43f5e', '#fb7185', '#fda4af', '#f472b6', '#db2777'],
-    purple: ['#8b5cf6', '#a78bfa', '#c4b5fd', '#7c3aed', '#6d28d9'],
-    dark: ['#fb7185', '#f43f5e', '#e11d48', '#f472b6', '#fda4af']
-  };
-
-  const currentTheme = document.documentElement.getAttribute('data-theme') || 'pink';
-  const selectedPalette = themePalettes[currentTheme] || themePalettes.pink;
-
-  chartInstance = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: labels.length > 0 ? labels : ['No Data'],
-      datasets: [{
-        data: data.length > 0 ? data : [1],
-        backgroundColor: data.length > 0 ? selectedPalette : ['#fce7f3'],
-        borderColor: '#ffffff',
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { boxWidth: 12, padding: 15 }
-        }
-      }
-    }
-  });
-}
-
-// ===================================
-// THEME SWITCHER EVENT LISTENER
-// ===================================
-const themeSelector = document.getElementById('theme-selector');
-const savedTheme = localStorage.getItem('app-theme') || 'pink';
-document.documentElement.setAttribute('data-theme', savedTheme);
-
-if (themeSelector) {
-  themeSelector.value = savedTheme;
-  themeSelector.addEventListener('change', (e) => {
-    const chosenTheme = e.target.value;
-    document.documentElement.setAttribute('data-theme', chosenTheme);
-    localStorage.setItem('app-theme', chosenTheme);
-    loadData();
-  });
-}
+// Initial load
+renderList();
+updateSummary();
