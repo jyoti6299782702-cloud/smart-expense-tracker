@@ -104,6 +104,119 @@
 
   </div>
 
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script>
+function getTransactions() {
+    return JSON.parse(localStorage.getItem('my_expense_data')) || [];
+}
+
+function saveTransactions(data) {
+    localStorage.setItem('my_expense_data', JSON.stringify(data));
+}
+
+function updateUI() {
+    var transactions = getTransactions();
+    var list = document.getElementById('transaction-list');
+    var totalIncomeEl = document.getElementById('total-income');
+    var totalExpenseEl = document.getElementById('total-expense');
+    var netBalanceEl = document.getElementById('net-balance');
+
+    var income = 0;
+    var expense = 0;
+
+    if (list) list.innerHTML = '';
+
+    for (var i = transactions.length - 1; i >= 0; i--) {
+        var t = transactions[i];
+        var amt = parseFloat(t.amount) || 0;
+
+        if (t.type === 'income') {
+            income += amt;
+        } else {
+            expense += amt;
+        }
+
+        if (list) {
+            var li = document.createElement('li');
+            li.style.display = 'flex';
+            li.style.justifyContent = 'space-between';
+            li.style.padding = '10px';
+            li.style.marginBottom = '8px';
+            li.style.borderRadius = '8px';
+            li.style.background = '#fff';
+            li.style.borderLeft = t.type === 'income' ? '5px solid #2e7d32' : '5px solid #d32f2f';
+
+            li.innerHTML = `
+                <div>
+                    <strong>${t.title}</strong><br>
+                    <small style="color: #666;">${t.category} • ${t.date}</small>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-weight: bold; color: ${t.type === 'income' ? '#2e7d32' : '#d32f2f'};">
+                        ${t.type === 'income' ? '+' : '-'}₹${amt.toFixed(2)}
+                    </span>
+                    <button style="background: none; border: none; cursor: pointer;" onclick="deleteItem(${i})">🗑️</button>
+                </div>
+            `;
+            list.appendChild(li);
+        }
+    }
+
+    if (totalIncomeEl) totalIncomeEl.innerText = '₹' + income.toFixed(2);
+    if (totalExpenseEl) totalExpenseEl.innerText = '₹' + expense.toFixed(2);
+    if (netBalanceEl) netBalanceEl.innerText = '₹' + (income - expense).toFixed(2);
+}
+
+function handleAddTransaction(event) {
+    if (event) event.preventDefault();
+
+    var titleInput = document.getElementById('title');
+    var amountInput = document.getElementById('amount');
+    var categoryInput = document.getElementById('category');
+    var typeInput = document.getElementById('type');
+
+    var title = titleInput ? titleInput.value.trim() : '';
+    var amount = amountInput ? parseFloat(amountInput.value) : 0;
+    var category = categoryInput ? categoryInput.value : 'General';
+    var type = typeInput ? typeInput.value : 'expense';
+
+    if (!title || isNaN(amount) || amount <= 0) {
+        alert('Please enter valid Title and Amount!');
+        return false;
+    }
+
+    var newTx = {
+        title: title,
+        amount: amount,
+        category: category,
+        type: type,
+        date: new Date().toLocaleDateString('en-IN')
+    };
+
+    var transactions = getTransactions();
+    transactions.push(newTx);
+    saveTransactions(transactions);
+
+    if (titleInput) titleInput.value = '';
+    if (amountInput) amountInput.value = '';
+
+    updateUI();
+    return false;
+}
+
+function deleteItem(index) {
+    var transactions = getTransactions();
+    transactions.splice(index, 1);
+    saveTransactions(transactions);
+    updateUI();
+}
+
+window.onload = function() {
+    var form = document.getElementById('expense-form');
+    if (form) {
+        form.onsubmit = handleAddTransaction;
+    }
+    updateUI();
+};
+</script>
 </body>
 </html>
