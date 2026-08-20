@@ -1,9 +1,7 @@
-// Function to get transactions from LocalStorage
 function getTransactions() {
     return JSON.parse(localStorage.getItem('expense_tracker_data')) || [];
 }
 
-// Function to save transactions
 function saveTransactions(data) {
     localStorage.setItem('expense_tracker_data', JSON.stringify(data));
 }
@@ -36,7 +34,7 @@ function updateUI() {
             li.innerHTML = `
                 <div>
                     <strong>${t.title}</strong><br>
-                    <small>${t.category} • ${t.date}</small>
+                    <small>${t.category || 'General'} • ${t.date}</small>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <span class="amount" style="font-weight: bold; color: ${t.type === 'income' ? '#2e7d32' : '#d32f2f'};">
@@ -54,17 +52,21 @@ function updateUI() {
     if (netBalanceEl) netBalanceEl.innerText = `₹${(income - expense).toFixed(2)}`;
 }
 
-// Add transaction function
-function addTransaction(e) {
+window.addTransaction = function(e) {
     if (e) e.preventDefault();
 
-    const title = document.getElementById('title')?.value.trim();
-    const amount = parseFloat(document.getElementById('amount')?.value);
-    const category = document.getElementById('category')?.value || 'General';
-    const type = document.getElementById('type')?.value || 'expense';
+    const titleEl = document.getElementById('title');
+    const amountEl = document.getElementById('amount');
+    const categoryEl = document.getElementById('category');
+    const typeEl = document.getElementById('type');
+
+    const title = titleEl ? titleEl.value.trim() : '';
+    const amount = amountEl ? parseFloat(amountEl.value) : 0;
+    const category = categoryEl ? categoryEl.value : 'General';
+    const type = typeEl ? typeEl.value : 'expense';
 
     if (!title || isNaN(amount) || amount <= 0) {
-        alert('Please enter a valid title and amount!');
+        alert('Kripya Title aur Valid Amount bharein!');
         return;
     }
 
@@ -80,14 +82,12 @@ function addTransaction(e) {
     transactions.push(newTx);
     saveTransactions(transactions);
 
-    // Reset Form
-    const form = document.getElementById('expense-form');
-    if (form) form.reset();
+    if (titleEl) titleEl.value = '';
+    if (amountEl) amountEl.value = '';
 
     updateUI();
-}
+};
 
-// Delete transaction
 window.deleteItem = function(index) {
     const transactions = getTransactions();
     transactions.splice(index, 1);
@@ -95,11 +95,6 @@ window.deleteItem = function(index) {
     updateUI();
 };
 
-// Event Listeners
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('expense-form');
-    if (form) {
-        form.addEventListener('submit', addTransaction);
-    }
+window.onload = function() {
     updateUI();
-});
+};
