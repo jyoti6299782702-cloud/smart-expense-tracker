@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Finance Tracker</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <div class="dashboard-wrapper">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-wallet"></i></div>
+        <div>
+          <h1>Smart Tracker</h1>
+          <p>Personal Finance</p>
+        </div>
+      </div>
+      <div class="user-pill">
+        <div class="avatar">A</div>
+        <span>My Space</span>
+      </div>
+    </header>
+
+    <!-- Main 2-Column Grid Layout -->
+    <div class="dashboard-grid">
+      
+      <!-- LEFT COLUMN -->
+      <div class="col">
+        <!-- Net Worth / Summary Card -->
+        <div class="card hero-card">
+          <div class="card-head">
+            <span class="tag">Total Net Worth</span>
+            <select id="time-filter" onchange="updateUI()" class="filter-select">
+              <option value="all">All Time</option>
+              <option value="week">This Week</option>
+              <option value="month" selected>This Month</option>
+              <option value="year">This Year</option>
+            </select>
+          </div>
+          
+          <div class="total-balance" id="total-balance">₹0.00</div>
+          
+          <div class="stats-row">
+            <div class="stat-item income">
+              <div class="stat-icon"><i class="fa-solid fa-arrow-down"></i></div>
+              <div>
+                <span class="label">Income</span>
+                <span class="amount" id="total-income">+₹0.00</span>
+              </div>
+            </div>
+            <div class="stat-item expense">
+              <div class="stat-icon"><i class="fa-solid fa-arrow-up"></i></div>
+              <div>
+                <span class="label">Expense</span>
+                <span class="amount" id="total-expense">-₹0.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Transaction Form Card -->
+        <div class="card">
+          <div class="card-head">
+            <h3><i class="fa-solid fa-plus-circle"></i> Add Transaction</h3>
+          </div>
+          <form id="tracker-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Type</label>
+                <select id="type" onchange="toggleCategory()">
+                  <option value="expense">Expense</option>
+                  <option value="income">Income</option>
+                </select>
+              </div>
+              <div class="form-group" id="category-group">
+                <label>Category</label>
+                <select id="category">
+                  <option value="Food & Dining">🍔 Food & Dining</option>
+                  <option value="Shopping">🛍️ Shopping</option>
+                  <option value="Transportation">🚗 Transport</option>
+                  <option value="Bills & Utilities">⚡ Bills</option>
+                  <option value="Entertainment">🎬 Entertainment</option>
+                  <option value="Others">📦 Others</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Description</label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-pen"></i>
+                <input type="text" id="desc" placeholder="e.g. Grocery shopping" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Amount (₹)</label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-indian-rupee-sign"></i>
+                <input type="number" id="amount" placeholder="0.00" step="any" required>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary">
+              <i class="fa-solid fa-plus"></i> Save Transaction
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="col">
+        <!-- Budget Progress Card -->
+        <div class="card">
+          <div class="card-head">
+            <h3><i class="fa-solid fa-chart-pie"></i> Monthly Budget</h3>
+            <span class="budget-badge" id="budget-percentage">0% Used</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="budget-progress"></div>
+          </div>
+          <div class="budget-info">
+            <span>Spent: <strong id="spent-amount">₹0</strong></span>
+            <span>Limit: <strong>₹50,000</strong></span>
+          </div>
+        </div>
+
+        <!-- Expense Chart Card -->
+        <div class="card">
+          <div class="card-head">
+            <h3><i class="fa-solid fa-chart-donut"></i> Expense Breakdown</h3>
+          </div>
+          <div class="chart-container">
+            <canvas id="expenseChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Transaction History Card -->
+        <div class="card">
+          <div class="card-head">
+            <h3><i class="fa-solid fa-list"></i> Recent Activity</h3>
+            <span class="count-badge" id="tx-count">0 items</span>
+          </div>
+          <ul id="transaction-list"></ul>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SINGLE CENTER FOOTER -->
+    <footer class="app-footer">
+      <p>Crafted with <i class="fa-solid fa-heart"></i> by <strong>Jyoti Agrawal</strong></p>
+    </footer>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
